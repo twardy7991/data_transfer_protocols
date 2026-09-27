@@ -1,39 +1,95 @@
 package org.twardy7991.protocolsimulator;
+import org.twardy7991.protocolsimulator.Pipe.OrderedPipe;
+import org.twardy7991.protocolsimulator.Pipe.Pipe;
+import org.twardy7991.protocolsimulator.Pipe.UnorderedPipe;
 import org.twardy7991.protocolsimulator.Protocols.GBN.GBNReceiver;
 import org.twardy7991.protocolsimulator.Protocols.GBN.GBNSender;
 import org.twardy7991.protocolsimulator.Protocols.GBN.Sndpkt;
+import org.twardy7991.protocolsimulator.Pipe.Timer;
+import org.twardy7991.protocolsimulator.Protocols.Protocol;
+import org.twardy7991.protocolsimulator.Protocols.ProtocolType;
+import org.twardy7991.protocolsimulator.Protocols.RDT10.RDT10Receiver;
+import org.twardy7991.protocolsimulator.Protocols.RDT10.RDT10Sender;
+import org.twardy7991.protocolsimulator.Protocols.RDT20.RDT20Receiver;
+import org.twardy7991.protocolsimulator.Protocols.RDT20.RDT20Sender;
+import org.twardy7991.protocolsimulator.Protocols.RDT21.RDT21Receiver;
+import org.twardy7991.protocolsimulator.Protocols.RDT21.RDT21Sender;
+import org.twardy7991.protocolsimulator.Protocols.RDT30.RDT30Receiver;
+import org.twardy7991.protocolsimulator.Protocols.RDT30.RDT30Sender;
+import org.twardy7991.protocolsimulator.Protocols.SenderProtocol;
+
+import java.util.logging.*;
 
 import static java.lang.System.Logger.Level.*;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
     public static void main(String[] args) throws InterruptedException {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        System.Logger logger = System.getLogger("org.example");
+        System.Logger logger = System.getLogger("org.twardy7991.protocolsimulator");
+
+        Logger rootLogger = Logger.getLogger("");
+        rootLogger.setLevel(Level.FINEST);
+        for (Handler handler : rootLogger.getHandlers()) {
+            handler.setLevel(Level.FINEST);
+
+            handler.setFormatter(new Formatter() {
+                @Override
+                public String format(LogRecord record) {
+                    return "%s%n".formatted(
+                            record.getMessage()
+                    );
+                }
+            });
+        }
+
         logger.log(INFO, "starting simulation");
 
-        Pipe pipe = new Pipe();
-        Util util = new Util(pipe);
+        ProtocolType protocol = ProtocolType.RDT10;
 
-//        RDT10 sender = new RDT10(util);
-//        RDT10 receiver = new RDT10(util);
+        Timer senderToReceiverTimer = new Timer();
+        Timer receiverToSenderTimer = new Timer();
 
-//        RDT20Sender sender = new RDT20Sender(util);
-//        RDT20Receiver receiver = new RDT20Receiver(util);
+        Pipe pipe;
+        SenderProtocol sender;
+        Protocol receiver;
 
-//        RDT21Sender sender = new RDT21Sender(util);
-//        RDT21Receiver receiver = new RDT21Receiver(util);
-//
-//        RDT30Sender sender = new RDT30Sender(util);
-//        RDT30Receiver receiver = new RDT30Receiver(util);
-
-        GBNSender sender = new GBNSender(util, new Sndpkt(3));
-        GBNReceiver receiver = new GBNReceiver(util);
+        switch (protocol) {
+            case RDT10 -> {
+                pipe = new OrderedPipe(senderToReceiverTimer, receiverToSenderTimer);
+                sender = new RDT10Sender(pipe);
+                receiver = new RDT10Receiver(pipe);
+            }
+            case RDT20 -> {
+                pipe = new OrderedPipe(senderToReceiverTimer, receiverToSenderTimer);
+                sender = new RDT20Sender(pipe);
+                receiver = new RDT20Receiver(pipe);
+            }
+            case RDT21 -> {
+                pipe = new OrderedPipe(senderToReceiverTimer, receiverToSenderTimer);
+                sender = new RDT21Sender(pipe);
+                receiver = new RDT21Receiver(pipe);
+            }
+            case RDT30 -> {
+                pipe = new OrderedPipe(senderToReceiverTimer, receiverToSenderTimer);
+                sender = new RDT30Sender(pipe);
+                receiver = new RDT30Receiver(pipe);
+            }
+            case GBN -> {
+                Timer timer = new Timer();
+                pipe = new UnorderedPipe(timer);
+                sender = new GBNSender(pipe, new Sndpkt(3));
+                receiver = new GBNReceiver(pipe);
+            }
+            default -> {
+                logger.log(ERROR, "Unknown protocol type %s", protocol);
+                pipe = new OrderedPipe(senderToReceiverTimer, receiverToSenderTimer);
+                sender = new RDT10Sender(pipe);
+                receiver = new RDT10Receiver(pipe);
+            }
+        }
 
         pipe.subscribe("receiver", receiver);
         pipe.subscribe("sender", sender);
+
         Simulation simulation = new Simulation(sender, receiver, pipe);
         Thread simulationThread = new Thread(simulation);
 
