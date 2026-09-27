@@ -1,5 +1,6 @@
 package org.twardy7991.protocolsimulator.Protocols.RDT30;
 
+import org.twardy7991.protocolsimulator.Pipe.Pipe;
 import org.twardy7991.protocolsimulator.Protocols.AbstractReceiverProtocol;
 import org.twardy7991.protocolsimulator.Protocols.Events.Event;
 import org.twardy7991.protocolsimulator.Protocols.Events.NewPacketEvent;
@@ -9,8 +10,8 @@ import static java.lang.System.Logger.Level.*;
 public class RDT30Receiver extends AbstractReceiverProtocol {
     private int expectedSequence = 0;
 
-    public RDT30Receiver(Util util) {
-        super(util);
+    public RDT30Receiver(Pipe pipe) {
+        super(pipe);
     }
 
     @Override
@@ -41,7 +42,7 @@ public class RDT30Receiver extends AbstractReceiverProtocol {
 
         byte checksum = Util.calculateChecksum(response);
         byte[] sndpkt = Util.make_pkt(new byte[]{response}, checksum);
-        util.udt_send(sndpkt, "sender", true, true);
+        pipe.udt_send(sndpkt, "sender", true, true, true);
     }
 
     @Override

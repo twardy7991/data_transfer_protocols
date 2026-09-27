@@ -1,5 +1,6 @@
 package org.twardy7991.protocolsimulator.Protocols.RDT21;
 
+import org.twardy7991.protocolsimulator.Pipe.Pipe;
 import org.twardy7991.protocolsimulator.Protocols.AbstractReceiverProtocol;
 import org.twardy7991.protocolsimulator.Protocols.Events.Event;
 import org.twardy7991.protocolsimulator.Protocols.Events.NewPacketEvent;
@@ -10,8 +11,8 @@ public class RDT21Receiver extends AbstractReceiverProtocol {
 
     private int expectedSequence = 0;
 
-    public RDT21Receiver(Util util) {
-        super(util);
+    public RDT21Receiver(Pipe pipe) {
+        super(pipe);
     }
 
     @Override
@@ -42,7 +43,7 @@ public class RDT21Receiver extends AbstractReceiverProtocol {
 
         byte checksum = Util.calculateChecksum(response);
         byte[] sndpkt = Util.make_pkt(new byte[]{response}, checksum);
-        util.udt_send(sndpkt, "sender", true, false);
+        pipe.udt_send(sndpkt, "sender", true, false, true);
     }
 
     @Override

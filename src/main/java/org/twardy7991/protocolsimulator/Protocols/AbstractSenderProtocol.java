@@ -1,5 +1,6 @@
 package org.twardy7991.protocolsimulator.Protocols;
 
+import org.twardy7991.protocolsimulator.Pipe.Pipe;
 import org.twardy7991.protocolsimulator.Protocols.Events.NewMessageEvent;
 import org.twardy7991.protocolsimulator.Protocols.Events.NewPacketEvent;
 import org.twardy7991.protocolsimulator.Protocols.Events.TimeoutEvent;
@@ -17,8 +18,8 @@ public abstract class AbstractSenderProtocol extends AbstractProtocol implements
 
     protected Timer timer = new Timer();
 
-    public AbstractSenderProtocol(Util util) {
-        super(util);
+    public AbstractSenderProtocol(Pipe pipe) {
+        super(pipe);
     }
 
     @Override
@@ -36,33 +37,33 @@ public abstract class AbstractSenderProtocol extends AbstractProtocol implements
         private final HashMap<Integer, ScheduledFuture<?>> timers = new HashMap<>();
         private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
-        public void startTimer(int packet){
+        public void startTimer(int sequence){
             final Runnable timer = new Runnable() {
                 @Override
                 public void run() {
 
-                    logger.log(DEBUG, "TIMER: Timed out for packet %s".formatted(Integer.toBinaryString(packet)));
-                    eventQueue.add(new TimeoutEvent(packet));
+                    logger.log(DEBUG, "SENDER TIMER: Timed out for sequence num %s".formatted(Integer.toBinaryString(sequence)));
+                    eventQueue.add(new TimeoutEvent(sequence));
                 }
             };
 
             final ScheduledFuture<?> beeperHandle = scheduler.schedule(timer, 7000, TimeUnit.MILLISECONDS);
-            logger.log(DEBUG, "TIMER: Timer started for packet %s".formatted(Integer.toBinaryString(packet)));
-            timers.put(packet, beeperHandle);
+            logger.log(DEBUG, "SENDER TIMER: Timer started for sequence num %s".formatted(Integer.toBinaryString(sequence)));
+            timers.put(sequence, beeperHandle);
         }
 
-        public void stopTimer(int packet){
-            if (timers.get(packet) != null) {
-                logger.log(DEBUG, "TIMER: Timer stopped for packet %s".formatted(Integer.toBinaryString(packet)));
-                timers.get(packet).cancel(true);
-                timers.remove(packet);
+        public void stopTimer(int sequence){
+            if (timers.get(sequence) != null) {
+                logger.log(DEBUG, "SENDER TIMER: Timer stopped for sequence %s".formatted(Integer.toBinaryString(sequence)));
+                timers.get(sequence).cancel(true);
+                timers.remove(sequence);
             }
         }
 
         public void shutdown(){
             for (int k : this.timers.keySet()){
                 timers.get(k).cancel(true);
-                logger.log(DEBUG, "TIMER: Cancelling timer");
+                logger.log(DEBUG, "SENDER TIMER: Cancelling timer");
             }
 
             scheduler.shutdown();

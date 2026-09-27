@@ -1,5 +1,6 @@
 package org.twardy7991.protocolsimulator.Protocols.RDT21;
 
+import org.twardy7991.protocolsimulator.Pipe.Pipe;
 import org.twardy7991.protocolsimulator.Protocols.AbstractSenderProtocol;
 import org.twardy7991.protocolsimulator.Protocols.Events.Event;
 import org.twardy7991.protocolsimulator.Protocols.Events.NewMessageEvent;
@@ -20,8 +21,8 @@ public class RDT21Sender extends AbstractSenderProtocol {
     private byte[] currPacket;
     private final BlockingQueue<Message> sndQueue = new LinkedBlockingQueue<>();
 
-    public RDT21Sender(Util util) {
-        super(util);
+    public RDT21Sender(Pipe pipe) {
+        super(pipe);
     }
 
     @Override
@@ -30,7 +31,7 @@ public class RDT21Sender extends AbstractSenderProtocol {
         this.currPacket = Util.make_pkt(data, checksum, (byte) this.currentSequence);
 
         logger.log(DEBUG, "SENDER: data sent: %s".formatted(Integer.toBinaryString(this.currPacket[0] & 0xFF)));
-        util.udt_send(currPacket, address, true, false);
+        pipe.udt_send(currPacket, address, true, false, true);
         this.waitACKNAK = true;
     }
 
@@ -38,11 +39,11 @@ public class RDT21Sender extends AbstractSenderProtocol {
     public void rdt_receive(byte[] packet) throws InterruptedException {
         if (!Util.isEqualChecksum(packet[0], packet[1])) {
             logger.log(DEBUG, "SENDER: Wrong checksum, data sent again: %s".formatted(Integer.toBinaryString(this.currPacket[0] & 0xFF)));
-            util.udt_send(this.currPacket, "receiver", true, false);
+            pipe.udt_send(this.currPacket, "receiver", true, false, true);
 
         } else if (packet[0] == 0){
             logger.log(DEBUG, "SENDER: NAK received, data sent again: %s".formatted(Integer.toBinaryString(this.currPacket[0] & 0xFF)));
-            util.udt_send(this.currPacket, "receiver", true, true);
+            pipe.udt_send(this.currPacket, "receiver", true, false, true);
 
         } else {
             logger.log(DEBUG, "SENDER: ACK with correct checksum received");

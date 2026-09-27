@@ -1,5 +1,6 @@
 package org.twardy7991.protocolsimulator.Protocols.GBN;
 
+import org.twardy7991.protocolsimulator.Pipe.Pipe;
 import org.twardy7991.protocolsimulator.Protocols.AbstractReceiverProtocol;
 import org.twardy7991.protocolsimulator.Protocols.Events.Event;
 import org.twardy7991.protocolsimulator.Protocols.Events.NewPacketEvent;
@@ -10,8 +11,8 @@ public class GBNReceiver extends AbstractReceiverProtocol {
     private int expectedSequence = 1;
     private volatile byte[] sndpkt = Util.make_pkt(new byte[]{0x0}, Util.calculateChecksum((byte)0));
 
-    public GBNReceiver(Util util) {
-        super(util);
+    public GBNReceiver(Pipe pipe) {
+        super(pipe);
     }
 
     @Override
@@ -30,7 +31,7 @@ public class GBNReceiver extends AbstractReceiverProtocol {
 
             byte checksum = Util.calculateChecksum(response);
             this.sndpkt = Util.make_pkt(new byte[]{response}, checksum);
-            util.udt_send(this.sndpkt, "sender", true, true);
+            pipe.udt_send(this.sndpkt, "sender", true, true, true);
 
             expectedSequence++;
         } else {
@@ -39,7 +40,7 @@ public class GBNReceiver extends AbstractReceiverProtocol {
                         expectedSequence, packet[2]
                 ));
             }
-            util.udt_send(this.sndpkt, "sender", true, true);
+            pipe.udt_send(this.sndpkt, "sender", true, true, true);
         }
     }
 

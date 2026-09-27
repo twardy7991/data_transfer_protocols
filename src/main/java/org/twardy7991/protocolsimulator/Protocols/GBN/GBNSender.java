@@ -1,10 +1,7 @@
 package org.twardy7991.protocolsimulator.Protocols.GBN;
 
+import org.twardy7991.protocolsimulator.Pipe.Pipe;
 import org.twardy7991.protocolsimulator.Protocols.*;
-import com.protocolsimulator.Protocols.Events.*;
-import org.Protocols.Events.*;
-import org.example.Protocols.Events.*;
-import org.protocolsimulator.Protocols.Events.*;
 import org.twardy7991.protocolsimulator.Message;
 import org.twardy7991.protocolsimulator.Protocols.Events.*;
 import org.twardy7991.protocolsimulator.Util;
@@ -21,8 +18,8 @@ public class GBNSender extends AbstractSenderProtocol {
     private int base = 1;
     private int nextseqnum = 1;
 
-    public GBNSender(Util util, Sndpkt sndpkt) {
-        super(util);
+    public GBNSender(Pipe pipe, Sndpkt sndpkt) {
+        super(pipe);
         this.sndpkt = sndpkt;
     }
 
@@ -38,7 +35,7 @@ public class GBNSender extends AbstractSenderProtocol {
             sndpkt.add(packet);
 
             logger.log(DEBUG, "SENDER: data sent, packet data: %s".formatted(Integer.toBinaryString(packet[0] & 0xFF)));
-            util.udt_send(packet, "receiver", true, true);
+            pipe.udt_send(packet, "receiver", true, true, true);
 
             if (base == nextseqnum){
                 timer.startTimer(base);
@@ -93,7 +90,7 @@ public class GBNSender extends AbstractSenderProtocol {
 
             for (byte[] packet : sndpkt) {
                 logger.log(DEBUG, "SENDER: Packet timeout, packet send again, packet data: %s".formatted(Integer.toBinaryString(packet[0] & 0xFF)));
-                util.udt_send(packet, "receiver", true, true);
+                pipe.udt_send(packet, "receiver", true, true, true);
             }
 
             this.timer.startTimer(timeoutEvent.packet());

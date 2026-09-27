@@ -1,5 +1,6 @@
 package org.twardy7991.protocolsimulator.Protocols.RDT20;
 
+import org.twardy7991.protocolsimulator.Pipe.Pipe;
 import org.twardy7991.protocolsimulator.Protocols.AbstractSenderProtocol;
 import org.twardy7991.protocolsimulator.Protocols.Events.Event;
 import org.twardy7991.protocolsimulator.Protocols.Events.NewPacketEvent;
@@ -20,8 +21,8 @@ public class RDT20Sender extends AbstractSenderProtocol implements SenderProtoco
     private byte[] currPacket;
     private final BlockingQueue<Message> sndQueue = new LinkedBlockingQueue<>();
 
-    public RDT20Sender(Util util) {
-        super(util);
+    public RDT20Sender(Pipe pipe) {
+        super(pipe);
     }
     
     @Override
@@ -29,16 +30,16 @@ public class RDT20Sender extends AbstractSenderProtocol implements SenderProtoco
         byte checksum = Util.calculateChecksum(data[0]);
         this.currPacket = Util.make_pkt(data, checksum);
 
-        logger.log(DEBUG, "data sent: %s".formatted(Integer.toBinaryString(this.currPacket[0] & 0xFF)));
-        util.udt_send(currPacket, address, true, false);
+        logger.log(DEBUG, "SENDER: data sent: %s".formatted(Integer.toBinaryString(this.currPacket[0] & 0xFF)));
+        pipe.udt_send(currPacket, address, true, false, true);
         this.waitACKNAK = true;
     }
 
     @Override
     public void rdt_receive(byte[] packet) throws InterruptedException {
         if (packet[0] == 0){
-        util.udt_send(this.currPacket, "receiver", false, false);
-            logger.log(DEBUG, "data sent again: %s".formatted(Integer.toBinaryString(this.currPacket[0] & 0xFF)));
+            pipe.udt_send(this.currPacket, "receiver", false, false, true);
+            logger.log(DEBUG, "SENDER: data sent again: %s".formatted(Integer.toBinaryString(this.currPacket[0] & 0xFF)));
             return;
         }
 
@@ -53,7 +54,7 @@ public class RDT20Sender extends AbstractSenderProtocol implements SenderProtoco
         switch (event){
             case NewMessageEvent m -> this.handleMessageEvent(m);
             case NewPacketEvent r -> this.handlePacketEvent(r);
-            case SendNewPacketEvent s -> this.handleSendNewPacketEvent();
+            case SendNewPacketEvent _ -> this.handleSendNewPacketEvent();
             default -> System.out.println();
         }
     }

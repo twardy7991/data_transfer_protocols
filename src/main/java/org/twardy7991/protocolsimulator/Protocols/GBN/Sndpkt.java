@@ -21,13 +21,11 @@ public class Sndpkt implements Iterable<byte[]> {
         return sndpkt.iterator();
     }
 
-    public boolean add(byte[] packet){
+    public void add(byte[] packet){
         if (counter < N){
             sndpkt.add(packet);
             counter++;
-            return true;
         }
-        return false;
     };
 
     public void delete(int i){
